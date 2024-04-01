@@ -1,0 +1,93 @@
+{
+    "name" : "AI电子书",
+    "appid" : "__UNI__782F90E",
+    "description" : "",
+    "versionName" : "3.1.03",
+    "versionCode" : 3103,
+    "transformPx" : false,
+    "channel_list" : [],
+    /* 5+App特有相关 */
+    "app-plus" : {},
+    /* 快应用特有相关 */
+    "quickapp" : {},
+    /* 小程序特有相关 */
+    "mp-weixin" : {
+        "appid" : "wx67eb96477b88139b",
+        "setting" : {
+            "urlCheck" : false,
+            "minified" : true,
+            "postcss" : true,
+            "es6" : true
+        },
+        "plugins" : {},
+        "lazyCodeLoading" : "requiredComponents",
+        "usingShopPlugin" : true,
+        "usingComponents" : true,
+        "__usePrivacyCheck__" : true,
+        "halfPage" : {
+            "firstPageNavigationStyle" : "custom"
+        },
+        "requiredPrivateInfos" : [],
+        "uniStatistics" : {
+            "enable" : false
+        },
+        "permission" : {},
+        "plus" : {
+            //uni-app项目对应节点名称为"app-plus"  
+            "popGesture" : "none"
+        }
+    },
+    "mp-alipay" : {
+        "usingComponents" : true,
+        "uniStatistics" : {
+            "enable" : false
+        }
+    },
+    "mp-baidu" : {
+        "usingComponents" : true,
+        "uniStatistics" : {
+            "enable" : false
+        }
+    },
+    "mp-toutiao" : {
+        "usingComponents" : true,
+        "uniStatistics" : {
+            "enable" : false
+        }
+    },
+    "uniStatistics" : {
+        "enable" : false
+    },
+    "h5" : {
+        "devServer" : {
+            "disableHostCheck" : true,
+            "proxy" : {
+                "/api" : {
+                    "target" : "http://www.dzm.com",
+                    "changeOrigin" : true,
+                    "secure" : false,
+                    "ws" : false,
+                    "pathRewrite" : {
+                        "^/api" : ""
+                    }
+                }
+            }
+        },
+        "title" : "全民生活馆",
+        "domain" : "",
+        "router" : {
+            "base" : "",
+            "mode" : "hash"
+        },
+        "uniStatistics" : {
+            "enable" : false
+        }
+    },
+    "mp-qq" : {
+        "uniStatistics" : {
+            "enable" : false
+        }
+    }
+}
+/* 5+App特有相关 *///true表示忽略版本检查提示框，HBuilderX1.9.0及以上版本支持
+
