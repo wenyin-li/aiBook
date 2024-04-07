@@ -46,7 +46,7 @@
 		methods: {
 			copy() {
 				uni.setClipboardData({
-					data: this.content,
+					data: this.resultText,
 					success: () => {
 						uni.showToast({
 							title: '复制成功',
@@ -55,9 +55,34 @@
 						});
 					},
 					fail: () => {
-						uni.showToast({
-							title: '复制失败',
-							icon: 'none'
+						// uni.showToast({
+						// 	title: '复制失败',
+						// 	icon: 'none'
+						// });
+						wx.showModal({
+							title: '提示',
+							content: '需要获取剪贴板权限，请前往设置页面打开',
+							showCancel: false,
+							success: function(res) {
+								if (res.confirm) {
+									wx.openSetting({
+										withSubscriptions: true,
+										success: function(res) {
+											if (res.authSetting[
+												'scope.writeClipboard']) {
+												// 用户打开了权限，可以再次尝试复制操作  
+												console.log('成功了')
+											} else {
+												// 用户仍然未授权，你可以做进一步的处理  
+												console.log('失败了')
+											}
+										}
+									});
+								}
+							},
+							fail:function(res){
+								console.log('失败原因：',res)
+							},
 						});
 					}
 				});
@@ -68,6 +93,29 @@
 					url: '/pages/bookList/index'
 				})
 			},
+			arrayBufferToString(buffer) {
+			  const view = new Uint8Array(buffer);  
+			  let str = '';  
+			  let i = 0;  
+			  let c = 1, c2, c3;  
+			  
+			  console.log(view,'viewviewviewview')
+			  while (i < view.length) {  
+			    c = view[i++];  
+			    if (c < 128) {  
+			      str += String.fromCharCode(c);  
+			    } else if ((c > 191) && (c < 224)) {  
+			      c2 = view[i++];  
+			      str += String.fromCharCode(((c & 0x1F) << 6) | (c2 & 0x3F));  
+			    } else {  
+			      c2 = view[i++];  
+			      c3 = view[i++];  
+			      str += String.fromCharCode(((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F));  
+			    }  
+			  }  
+			  
+			  return str;  
+			},  
 			writeCode(event) {
 				const that = this
 				const requestTask = uni.request({
@@ -105,9 +153,11 @@
 					console.log(res,'流式数据')
 					// 转码返回的2进制值
 					const arrayBuffer = res.data;
-					const uint8Array = new Uint8Array(arrayBuffer);
-					const textDecoder = new TextDecoder('utf-8');
-					const text = textDecoder.decode(uint8Array);
+					// const uint8Array = new Uint8Array(arrayBuffer);
+					// const textDecoder = new TextDecoder('utf-8');
+					// const text = textDecoder.decode(uint8Array);
+					const text = that.arrayBufferToString(arrayBuffer);
+					// console.log(text,'text');
 					
 					//去掉前面的data:
 					let textArr = text.replaceAll('\n', '').split('data:')
@@ -119,7 +169,7 @@
 							filteredArr.push(textArr[i])
 						}
 					}
-					console.log(filteredArr, 'filteredArr')
+					// console.log(filteredArr, 'filteredArr')
 			
 					// 获取返回的值
 					let strArr = []
@@ -139,9 +189,20 @@
 							} else {
 								that.originString += filteredArr[i]
 								if (that.originString[0] == '{' && that.originString[that.originString.length - 1] == '}') {
-									let info = JSON.parse(that.originString) || ''
+									
+									that.originString = that.originString.replaceAll('data:', '')
+									let info = ''
+									try {
+										info = JSON.parse(that.originString)
+										// 使用 info 做后续操作  
+									} catch (error) {
+										// 处理错误，例如显示错误消息或执行回退逻辑  
+										info = ''
+									}
 									that.originString = ''
-									that.settingArr.push(info.data.content)
+									if (info && info.data) {
+										that.settingArr.push(info.data.content)
+									}
 								}
 							}
 						}
@@ -259,7 +320,7 @@
 			font-size: 28rpx;
 
 			.content-box {
-				height: 840rpx;
+				height: 810rpx;
 				overflow-y: auto;
 				white-space: pre-wrap;
 			}

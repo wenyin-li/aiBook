@@ -418,7 +418,7 @@ const getOrderId = function() {
 
 // 获取平台标识
 const getPlatformFlag = () => {
-  return 'weapp'
+  return 'wxapp'
 }
 
 // 是否已登录
@@ -752,7 +752,7 @@ const viewScroll = (stayDuration, callback) => {
     referrerQuery: referrerPage == undefined ? '' : referrerPage.options, //前向地址参数
     isEntryPage: referrerPage == undefined ? true : false, //是否入口页
     mpAppid: 'wxd4f9ac94c6de6baa', //小程序APPID
-    secPlatform: 'weapp', //小程序平台(weapp)
+    secPlatform: 'wxapp', //小程序平台(wxapp)
     stayDuration: stayDuration,
   }
   http
@@ -793,6 +793,7 @@ const clickStatistics = (eventName, callback) => {
       "sourcePage": "",
     }
   }
+  console.log(eventName,'eventName')
   // http
   //   .post('/mallv2/app/data/userBehavior', params)
   //   .then(res => {
@@ -817,6 +818,9 @@ const statisticsData = (data, callback) => {
     networkType: uni.getStorageSync('networkType') || 'wifi',
     userId: uni.getStorageSync('openid') || ''
   }, data)
+
+  console.log(params,'params')
+  
   // http
   //   .post('/mallv2/app/data/userBehavior', params)
   //   .then(res => {
@@ -837,25 +841,6 @@ const statisticsData = (data, callback) => {
 }
 // 会话开始
 const sessionStart = (data, callback) => {
-  // http
-  //   .post('/eventPoint/sessionStart', data)
-  //   .then(res => {
-  //     if (res.data) {
-  //       uni.showToast({
-  //         title: res.data,
-  //         icon: 'none',
-  //         duration: 2000
-  //       })
-  //     }
-  //   })
-  //   .catch(err => {})
-  //   .finally(() => {
-  //     if (callback) {
-  //       callback()
-  //     }
-  //   })
-
-
   http
     .post('/statistics/eventPoint/sessionStart', data)
     .then(res => {
@@ -876,24 +861,6 @@ const sessionStart = (data, callback) => {
 }
 // 结束会话
 const sessionEnd = (data, callback) => {
-  // http
-  //   .post('/eventPoint/sessionEnd', data)
-  //   .then(res => {
-  //     if (res.data) {
-  //       uni.showToast({
-  //         title: res.data,
-  //         icon: 'none',
-  //         duration: 2000
-  //       })
-  //     }
-  //   })
-  //   .catch(err => {})
-  //   .finally(() => {
-  //     if (callback) {
-  //       callback()
-  //     }
-  //   })
-
   http
     .post('/statistics/eventPoint/sessionEnd', data)
     .then(res => {
@@ -914,24 +881,6 @@ const sessionEnd = (data, callback) => {
 }
 // 浏览页面
 const pageView = (data, callback) => {
-  // http
-  //   .post('/eventPoint/pageView', data)
-  //   .then(res => {
-  //     if (res.data) {
-  //       uni.showToast({
-  //         title: res.data,
-  //         icon: 'none',
-  //         duration: 2000
-  //       })
-  //     }
-  //   })
-  //   .catch(err => {})
-  //   .finally(() => {
-  //     if (callback) {
-  //       callback()
-  //     }
-  //   })
-
   http
     .post('/statistics/eventPoint/pageView', data)
     .then(res => {

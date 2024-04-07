@@ -36,15 +36,15 @@
 				content: '',
 				appItem: {},
 				settingArr: [],
-				originString:'',
-				timer:null,
-				resultText:''
+				originString: '',
+				timer: null,
+				resultText: ''
 			}
 		},
 		methods: {
 			copy() {
 				uni.setClipboardData({
-					data: this.content,
+					data: this.resultText,
 					success: () => {
 						uni.showToast({
 							title: '复制成功',
@@ -53,9 +53,34 @@
 						});
 					},
 					fail: () => {
-						uni.showToast({
-							title: '复制失败',
-							icon: 'none'	
+						// uni.showToast({
+						// 	title: '复制失败',
+						// 	icon: 'none'
+						// });
+						wx.showModal({
+							title: '提示',
+							content: '需要获取剪贴板权限，请前往设置页面打开',
+							showCancel: false,
+							success: function(res) {
+								if (res.confirm) {
+									wx.openSetting({
+										withSubscriptions: true,
+										success: function(res) {
+											if (res.authSetting[
+													'scope.writeClipboard']) {
+												// 用户打开了权限，可以再次尝试复制操作  
+												console.log('成功了')
+											} else {
+												// 用户仍然未授权，你可以做进一步的处理  
+												console.log('失败了')
+											}
+										}
+									});
+								}
+							},
+							fail: function(res) {
+								console.log('失败原因：', res)
+							},
 						});
 					}
 				});
@@ -73,6 +98,31 @@
 				this.appItem = uni.getStorageSync('appItem')
 				this.pageTitle = this.appItem.name
 			},
+			arrayBufferToString(buffer) {
+				const view = new Uint8Array(buffer);
+				let str = '';
+				let i = 0;
+				let c = 1,
+					c2, c3;
+
+				while (i < view.length) {
+					c = view[i++];
+					if (c < 128) {
+						str += String.fromCharCode(c);
+					} else if ((c > 191) && (c < 224)) {
+						c2 = view[i++];
+						str += String.fromCharCode(((c & 0x1F) << 6) | (c2 & 0x3F));
+					} else {
+						c2 = view[i++];
+						c3 = view[i++];
+						str += String.fromCharCode(((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F));
+					}
+				}
+
+				return str;
+			},
+
+			// 使用示例  
 			commonToolAi(event) {
 				const that = this
 				const requestTask = uni.request({
@@ -80,12 +130,12 @@
 					method: 'POST',
 					data: {
 						toolId: this.appItem.id,
-						content:this.content
+						content: this.content
 					},
-			
+
 					responseType: 'text',
 					enableChunked: true,
-			
+
 					header: {
 						"Accept": "text/event-stream",
 						"Content-Type": "application/json;",
@@ -93,29 +143,32 @@
 						"token": uni.getStorageSync('token'),
 					},
 					success: res => {
-						console.log(res, 'resppppp')
+
 					},
 					fail: (err) => {
-						console.log(err, 'errrrr')
-						console.log('请求失败:', err);
+
 					}
 				})
-				
+
 				requestTask.onHeadersReceived(function(res) {
 					console.log(res, '1111111111');
 				});
 				// 这里监听消息
 				requestTask.onChunkReceived(function(res) {
-					console.log(res,'流式数据')
 					// 转码返回的2进制值
 					const arrayBuffer = res.data;
-					const uint8Array = new Uint8Array(arrayBuffer);
-					const textDecoder = new TextDecoder('utf-8');
-					const text = textDecoder.decode(uint8Array);
-					
+
+					// const uint8Array = new Uint8Array(arrayBuffer);
+					// const textDecoder = new TextDecoder('utf-8');
+					// const text = textDecoder.decode(uint8Array);
+
+					const text = that.arrayBufferToString(arrayBuffer);
+
+					// 或者使用其他方式将Base64字符串转换为UTF-8字符串
+
 					//去掉前面的data:
 					let textArr = text.replaceAll('\n', '').split('data:')
-					
+
 					let filteredArr = []
 					//转化为一个数组
 					for (let i in textArr) {
@@ -123,17 +176,15 @@
 							filteredArr.push(textArr[i])
 						}
 					}
-					console.log(filteredArr, 'filteredArr')
-			
+
 					// 获取返回的值
 					let strArr = []
-					
+
 					for (let i in filteredArr) {
 						// 如果有完整一条json转对象的就直接转
 						if (filteredArr[i][0] == '{' && filteredArr[i][filteredArr[i].length - 1] == '}') {
 							let info = JSON.parse(filteredArr[i])
-							
-							console.log(info,'infoinfo',that.settingArr,'that.settingArr',info.data.content)
+
 							that.settingArr.push(info.data.content)
 							// debugger
 						} else {
@@ -142,15 +193,26 @@
 								that.originString = filteredArr[i]
 							} else {
 								that.originString += filteredArr[i]
-								if (that.originString[0] == '{' && that.originString[that.originString.length - 1] == '}') {
-									let info = JSON.parse(that.originString) || ''
+								if (that.originString[0] == '{' && that.originString[that.originString.length -
+										1] == '}') {
+									that.originString = that.originString.replaceAll('data:', '')
+									let info = ''
+									try {
+										info = JSON.parse(that.originString)
+										// 使用 info 做后续操作  
+									} catch (error) {
+										// 处理错误，例如显示错误消息或执行回退逻辑  
+										info = ''
+									}
 									that.originString = ''
-									that.settingArr.push(info.data.content)
+									if (info && info.data) {
+										that.settingArr.push(info.data.content)
+									}
 								}
 							}
 						}
 					}
-				
+
 					if (that.timer == null) {
 						that.startSetTimeout()
 					}
@@ -161,7 +223,7 @@
 					if (this.settingArr[0]) {
 						this.resultText = this.resultText + this.settingArr[0];
 					}
-			
+
 					this.settingArr.shift()
 					if (this.settingArr.length == 0) {
 						clearInterval(this.timer)
@@ -176,8 +238,8 @@
 			this.getAppItem()
 			this.commonToolAi()
 		},
-		onHide(){
-			if(this.timer != null){
+		onHide() {
+			if (this.timer != null) {
 				clearInterval(this.timer)
 			}
 		},
@@ -255,8 +317,9 @@
 			box-sizing: border-box;
 			padding: 28rpx;
 			font-size: 28rpx;
-			.content-box{
-				height: 840rpx;
+
+			.content-box {
+				height: 810rpx;
 				overflow-y: auto;
 			}
 		}

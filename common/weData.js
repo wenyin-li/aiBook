@@ -57,7 +57,7 @@ import http from '@/common/http.js'
 						referrerQuery:referrerPage == undefined?'':JSON.stringify(referrerPage.options),//前向地址参数
 						isEntryPage:referrerPage == undefined ?true:false,//是否入口页
 						mpAppid:'wxd4f9ac94c6de6baa',  //小程序APPID
-						secPlatform:'weapp',//小程序平台(weapp)
+						secPlatform:'wxapp',//小程序平台(weapp)
 						elementId:current_target.id,//元素ID
 						elementContent:JSON.stringify(arguments[0].detail),//元素内容
 						elementName:current_target.id,//元素名称

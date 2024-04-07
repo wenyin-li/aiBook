@@ -23,7 +23,7 @@
         "lazyCodeLoading" : "requiredComponents",
         "usingShopPlugin" : true,
         "usingComponents" : true,
-        "__usePrivacyCheck__" : true,
+        // "__usePrivacyCheck__" : true,
         "halfPage" : {
             "firstPageNavigationStyle" : "custom"
         },
@@ -31,7 +31,14 @@
         "uniStatistics" : {
             "enable" : false
         },
-        "permission" : {},
+        "permission" : {
+			"scope.userLocation": {
+				"desc": "你的位置信息将用于小程序位置接口的效果展示"
+			},
+			"scope.writeClipboard": {
+				"desc":"你的小程序需要获取剪贴板权限，以便用户可以复制和粘贴内容"
+			}
+		},
         "plus" : {
             //uni-app项目对应节点名称为"app-plus"  
             "popGesture" : "none"

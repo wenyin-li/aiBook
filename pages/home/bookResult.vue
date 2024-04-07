@@ -13,8 +13,7 @@
 		</view>
 
 		<view class="book-info" :style="'margin-top:'+(statusBarHeight + capsuleHeight + 30)+'px;'">
-			<image class="book-cover"
-				:src="bookInfo.image" mode="widthFix">
+			<image class="book-cover" :src="bookInfo.image" mode="widthFix">
 			</image>
 			<view class="book-name">{{bookInfo.name || '生成中...'}}</view>
 			<view class="book-author">作者：<text class="user-name"
@@ -68,7 +67,7 @@
 				wordNums: '',
 				orderNo: '',
 				timer: null,
-				bookTimer:null,
+				bookTimer: null,
 				bookDetail: '',
 				bookStatusTimer: '',
 				bookBgList: [{
@@ -109,8 +108,8 @@
 				originString: '',
 				settingArr: [],
 				percent: 0, // 初始百分比
-				bookId:'',
-				showPercent:false
+				bookId: '',
+				showPercent: false
 
 			}
 		},
@@ -133,11 +132,11 @@
 
 		},
 		onHide() {
-			if(this.timer != null){
+			if (this.timer != null) {
 				clearInterval(this.timer)
 			}
-			if(this.timer != null){
-				clearInterval(this.bookTimer)	
+			if (this.timer != null) {
+				clearInterval(this.bookTimer)
 			}
 		},
 		methods: {
@@ -147,6 +146,29 @@
 			//清除缓存
 			setRemoveSS() {
 				uni.removeStorageSync('bookInfo')
+			},
+			arrayBufferToString(buffer) {
+				const view = new Uint8Array(buffer);
+				let str = '';
+				let i = 0;
+				let c = 1,
+					c2, c3;
+
+				while (i < view.length) {
+					c = view[i++];
+					if (c < 128) {
+						str += String.fromCharCode(c);
+					} else if ((c > 191) && (c < 224)) {
+						c2 = view[i++];
+						str += String.fromCharCode(((c & 0x1F) << 6) | (c2 & 0x3F));
+					} else {
+						c2 = view[i++];
+						c3 = view[i++];
+						str += String.fromCharCode(((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F));
+					}
+				}
+
+				return str;
 			},
 			devBook() {
 				const that = this
@@ -161,7 +183,8 @@
 					data: {
 						"setting": this.bookBgList[bgIndex].title, // 故事背景
 						"author": uni.getStorageSync('author'), // 作者
-						"leader": uni.getStorageSync('leader01') + ',' + uni.getStorageSync('userSex01') + ',' +uni.getStorageSync('leader02') + ',' + uni.getStorageSync('userSex02'), // 主角
+						"leader": uni.getStorageSync('leader01') + ',' + uni.getStorageSync('userSex01') + ',' +
+							uni.getStorageSync('leader02') + ',' + uni.getStorageSync('userSex02'), // 主角
 						"blurb": uni.getStorageSync('bookDesc'), // 简介
 						"toolId": 2,
 						// "setting": "重生",
@@ -195,14 +218,14 @@
 				requestTask.onChunkReceived(function(res) {
 					const arrayBuffer = res.data;
 
-					const uint8Array = new Uint8Array(arrayBuffer);
-					const textDecoder = new TextDecoder('utf-8');
-					const text = textDecoder.decode(uint8Array);
+					// const uint8Array = new Uint8Array(arrayBuffer);
+					// const textDecoder = new TextDecoder('utf-8');
+					// const text = textDecoder.decode(uint8Array);
+
+					const text = that.arrayBufferToString(arrayBuffer);
 
 					let textArr = text.replaceAll('\n', '').split('data:')
-					// console.log(textArr, 'text')
-
-					// let filteredArr = textArr.filter(item => { item && item.trim() });
+					
 					let filteredArr = []
 					for (let i in textArr) {
 						if (textArr[i]) {
@@ -216,26 +239,40 @@
 					for (let i in filteredArr) {
 						// 如果有完整一条json转对象的就直接转
 						if (filteredArr[i][0] == '{' && filteredArr[i][filteredArr[i].length - 1] == '}') {
+							console.log(filteredArr[i], '111111')
 							let info = JSON.parse(filteredArr[i])
 							that.settingArr.push(info.data.blurb)
-							if(info.data.id){
+							if (info.data.id) {
 								that.bookInfo.name = info.data.name
 								that.bookInfo.author = info.data.author
 								that.bookInfo.bookId = info.data.id
 								that.bookInfo.image = info.data.image
 								that.getBookDetail()
 							}
-							console.log(info,'infoinfo')
+							console.log(info, 'infoinfo')
 						} else {
 							// 没有完整一条的先存一般，在跟后面的加起来
 							if (!that.originString) {
 								that.originString = filteredArr[i]
 							} else {
 								that.originString += filteredArr[i]
-								if (that.originString[0] == '{' && that.originString[that.originString.length - 1] == '}') {
-									let info = JSON.parse(that.originString)
+								console.log(filteredArr[i], '2222222')
+								console.log(that.originString, '2222222')
+								if (that.originString[0] == '{' && that.originString[that.originString.length -
+									1] == '}') {
+									that.originString = that.originString.replaceAll('data:', '')
+									let info = ''
+									try {
+										info = JSON.parse(that.originString)
+										// 使用 info 做后续操作  
+									} catch (error) {
+										// 处理错误，例如显示错误消息或执行回退逻辑  
+										info = ''
+									}
 									that.originString = ''
-									that.settingArr.push(info.data.blurb)
+									if(info&&info.data){
+										that.settingArr.push(info.data.blurb)
+									}
 								}
 							}
 						}
@@ -311,7 +348,7 @@
 									url: '/pages/bookList/lookBook?url=' + this.bookDetail.url
 								})
 							}
-						}else{
+						} else {
 							this.percent = res.data.rate
 						}
 					})
@@ -320,14 +357,14 @@
 			// 生成小说
 			getMyBook() {
 				// 生成小说，需要确定轮询已生成
-				console.log(this.bookDetail,'this.bookDetail')
+				console.log(this.bookDetail, 'this.bookDetail')
 				if (this.bookDetail && this.bookDetail.url) {
 					this.setRemoveSS()
 					uni.setStorageSync('bookDetail', this.bookDetail)
 					uni.navigateTo({
 						url: '/pages/bookList/lookBook?url=' + this.bookDetail.url
 					})
-				} else{
+				} else {
 					this.showPercent = true
 				}
 			},
@@ -503,36 +540,45 @@
 			transform: scale(1, 1);
 		}
 	}
-	
-	.percent-button {  
-	  position: relative;  
-	  display: flex;  
-	  align-items: center;  
-	  justify-content: center;  
-	  width: 200px; /* 或者其他你需要的宽度 */  
-	  height: 60px; /* 或者其他你需要的高度 */  
-	  border-radius: 10px; /* 或者其他你需要的圆角大小 */  
-	  overflow: hidden; /* 隐藏超出按钮范围的元素 */  
-	  
-	  width: 670rpx;
-	  height: 116rpx;
-	  border-radius: 116rpx;
-	  background: #F9F9F9;
-	  margin-top: 50rpx;
-	}  
-	  
-	.button-text {  
-	  z-index: 1; /* 确保文本在进度条上方 */  
-	  color: #337CFC; /* 文本颜色 */  
-	  font-size: 16px; /* 或者其他你需要的字体大小 */  
-	}  
-	  
-	.percent-indicator {  
-	  position: absolute;  
-	  top: 0;  
-	  left: 0;  
-	  width: var(--percent); /* 使用 CSS 变量来动态设置宽度 */  
-	  height: 100%;  
-	  background-color:#DBE5FA; /* 进度条颜色 */  
-	} 
+
+	.percent-button {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 200px;
+		/* 或者其他你需要的宽度 */
+		height: 60px;
+		/* 或者其他你需要的高度 */
+		border-radius: 10px;
+		/* 或者其他你需要的圆角大小 */
+		overflow: hidden;
+		/* 隐藏超出按钮范围的元素 */
+
+		width: 670rpx;
+		height: 116rpx;
+		border-radius: 116rpx;
+		background: #F9F9F9;
+		margin-top: 50rpx;
+	}
+
+	.button-text {
+		z-index: 1;
+		/* 确保文本在进度条上方 */
+		color: #337CFC;
+		/* 文本颜色 */
+		font-size: 16px;
+		/* 或者其他你需要的字体大小 */
+	}
+
+	.percent-indicator {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: var(--percent);
+		/* 使用 CSS 变量来动态设置宽度 */
+		height: 100%;
+		background-color: #DBE5FA;
+		/* 进度条颜色 */
+	}
 </style>

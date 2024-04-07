@@ -109,9 +109,30 @@
 			getAppItem() {
 				this.appItem = uni.getStorageSync('appItem')
 			},
+			arrayBufferToString(buffer) {
+			  const view = new Uint8Array(buffer);  
+			  let str = '';  
+			  let i = 0;  
+			  let c = 1, c2, c3;  
+			  
+			  while (i < view.length) {  
+			    c = view[i++];  
+			    if (c < 128) {  
+			      str += String.fromCharCode(c);  
+			    } else if ((c > 191) && (c < 224)) {  
+			      c2 = view[i++];  
+			      str += String.fromCharCode(((c & 0x1F) << 6) | (c2 & 0x3F));  
+			    } else {  
+			      c2 = view[i++];  
+			      c3 = view[i++];  
+			      str += String.fromCharCode(((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F));  
+			    }  
+			  }  
+			  
+			  return str;  
+			}, 
 			aiMeasureMoveStream() {
 				const that = this
-				
 				let requestTask = uni.request({
 					url: 'https://api.firedigit.cn/measureMove/aiMeasureMoveStream',
 					method: 'POST',
@@ -150,13 +171,15 @@
 					// console.log(res,'流式数据')
 					// 转码返回的2进制值
 					const arrayBuffer = res.data;
-					const uint8Array = new Uint8Array(arrayBuffer);
-					const textDecoder = new TextDecoder('utf-8');
-					const text = textDecoder.decode(uint8Array);
+					// const uint8Array = new Uint8Array(arrayBuffer);
+					// const textDecoder = new TextDecoder('utf-8');
+					// const text = textDecoder.decode(uint8Array);
 					
-					//去掉前面的data:
+					const text = that.arrayBufferToString(arrayBuffer);
+					console.log(text,'text');
+					
+					//去掉前面的data: 
 					let textArr = text.replaceAll('\n', '').split('data:')
-					
 					let filteredArr = []
 					//转化为一个数组
 					for (let i in textArr) {
@@ -164,17 +187,14 @@
 							filteredArr.push(textArr[i])
 						}
 					}
-					console.log(filteredArr, 'filteredArr')
 			
 					// 获取返回的值
 					let strArr = []
-					
 					for (let i in filteredArr) {
 						// 如果有完整一条json转对象的就直接转
 						if (filteredArr[i][0] == '{' && filteredArr[i][filteredArr[i].length - 1] == '}') {
 							let info = JSON.parse(filteredArr[i])
 							that.settingArr.push(info.data.content)
-							// debugger
 						} else {
 							// 没有完整一条的先存一般，在跟后面的加起来
 							if (!that.originString) {
@@ -182,14 +202,26 @@
 							} else {
 								that.originString += filteredArr[i]
 								if (that.originString[0] == '{' && that.originString[that.originString.length - 1] == '}') {
-									let info = JSON.parse(that.originString) || ''
+									
+									that.originString = that.originString.replaceAll('data:', '')
+									let info = ''
+									try {
+										info = JSON.parse(that.originString)
+										// 使用 info 做后续操作  
+									} catch (error) {
+										// 处理错误，例如显示错误消息或执行回退逻辑  
+										console.log(error,'error')
+										info = ''
+									}
 									that.originString = ''
-									that.settingArr.push(info.data.content)
+									if (info && info.data) {
+										that.settingArr.push(info.data.content)
+									}
 								}
 							}
 						}
 					}
-				
+					console.log(that.timer,'that.timer')
 					if (that.timer == null) {
 						that.startSetTimeout()
 					}
@@ -215,31 +247,25 @@
 					if (this.settingArr.length == 0) {
 						console.log(this.fortuneData.composite,'this.fortuneData.composite')
 						clearInterval(this.timer)
-						
+						this.timer = null
 						if(this.axiosType == '综合运势'){
 							console.log(this.axiosType,'this.axiosType')
-							debugger
 							this.axiosType = '财富机遇'
 						}else if(this.axiosType == '财富机遇'){
 							console.log(this.axiosType,'this.axiosType')
-							debugger
 							this.axiosType = '事业发展'
 						}else if(this.axiosType == '事业发展'){
 							console.log(this.axiosType,'this.axiosType')
-							debugger
 							this.axiosType = '感情运程'
 						}else if(this.axiosType == '感情运程'){
 							console.log(this.axiosType,'this.axiosType')
-							debugger
 							this.axiosType = '身体健康'
 						}else if(this.axiosType == '身体健康'){
 							console.log(this.axiosType,'this.axiosType')
-							debugger
 							this.axiosType = ''
 						}
 						
 						if(this.axiosType){
-							debugger
 							this.aiMeasureMoveStream()
 						}
 					}
